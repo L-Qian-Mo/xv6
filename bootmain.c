@@ -22,7 +22,7 @@ bootmain(void)
   void (*entry)(void);
   uchar* pa;
 
-  elf = (struct elfhdr*)0x10000;  // scratch space
+  elf = (struct elfhdr*)0x10000;  // scratch space，64KiB
 
   // Read 1st page off disk
   readseg((uchar*)elf, 4096, 0);
@@ -37,6 +37,8 @@ bootmain(void)
   for(; ph < eph; ph++){
     pa = (uchar*)ph->paddr;
     readseg(pa, ph->filesz, ph->off);
+    // ph->memsz：该段在内存中需要的总大小（包含未初始化数据/BSS段）
+    // 若memsz > filesz，说明需要将多余部分清零（BSS段特性：初始化为0）
     if(ph->memsz > ph->filesz)
       stosb(pa + ph->filesz, 0, ph->memsz - ph->filesz);
   }
@@ -45,6 +47,7 @@ bootmain(void)
   // Does not return!
   entry = (void(*)(void))(elf->entry);
   entry();
+  // 跳转到内核入口地址：至此引导加载器完成使命，内核开始执行（永不返回）
 }
 
 void
