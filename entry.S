@@ -44,15 +44,20 @@ _start = V2P_WO(entry)
 .globl entry
 entry:
   # Turn on page size extension for 4Mbyte pages
+  #页大小扩展【Page Size Extension】，它允许页框大小为4MB而不是4KB
+  #扩展分页用于把大段连续的线性地址转换成相应的物理地址，在这种情况下，内核可以不用中间页表进行地址转换
+  
+  #这里在一开始选择大页模式编程简单，不需要复杂的二级模式
   movl    %cr4, %eax
   orl     $(CR4_PSE), %eax
   movl    %eax, %cr4
   # Set page directory
+  #将页表首地址entrypgdir(物理地址)写入CR3寄存器
   movl    $(V2P_WO(entrypgdir)), %eax
   movl    %eax, %cr3
   # Turn on paging.
   movl    %cr0, %eax
-  orl     $(CR0_PG|CR0_WP), %eax
+  orl     $(CR0_PG|CR0_WP), %eax    #开启分页模式（PG位），WP防止修改内核代码
   movl    %eax, %cr0
 
   # Set up the stack pointer.
